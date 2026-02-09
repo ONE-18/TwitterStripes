@@ -12,8 +12,21 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
-app.use(express.static("public"));
-app.use("/output", express.static(path.join(__dirname, "output")));
+
+// Asegurar que los directorios existan
+const outputDir = path.join(__dirname, "output");
+const publicDir = path.join(__dirname, "public");
+
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir, { recursive: true });
+}
+
+// Servir archivos estáticos
+app.use(express.static(publicDir));
+app.use("/output", express.static(outputDir));
+
+console.log("📁 Public dir:", publicDir);
+console.log("📁 Output dir:", outputDir);
 
 app.get("/api/images", (req, res) => {
   try {
