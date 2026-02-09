@@ -251,7 +251,8 @@
     <div class="content">
       <div class="input-group">
         <input id="url" type="text" placeholder="Pega la URL del tweet aquí..." />
-        <button onclick="merge()" id="processBtn">Procesar</button>
+        <button onclick="downloadAction()" id="downloadBtn">⬇️ Descargar</button>
+        <button onclick="mergeAction()" id="mergeBtn">🔗 Mergear</button>
       </div>
 
       <div class="error" id="error"></div>
@@ -297,12 +298,54 @@
       }
     }
 
-    async function merge() {
+    async function downloadAction() {
+      const url = document.getElementById("url").value.trim();
+      const errorEl = document.getElementById("error");
+      const loadingEl = document.getElementById("loading");
+      const btn = document.getElementById("downloadBtn");
+
+      errorEl.classList.remove("show");
+
+      if (!url) {
+        showError("Por favor ingresa una URL válida");
+        return;
+      }
+
+      btn.disabled = true;
+      loadingEl.classList.add("active");
+      loadingEl.textContent = "Descargando imágenes...";
+
+      try {
+        const res = await fetch("/api/merge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, action: "download" })
+        });
+
+        const data = await res.json();
+
+        if (data.images) {
+          showNotice(`✅ ${data.images.length} imagen(es) descargada(s)`);
+          document.getElementById("url").value = "";
+        } else {
+          showError(data.error || "Error al descargar las imágenes");
+        }
+      } catch (err) {
+        showError("Error de conexión. Intenta nuevamente.");
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        loadingEl.classList.remove("active");
+        loadingEl.textContent = "Procesando tweet...";
+      }
+    }
+
+    async function mergeAction() {
       const url = document.getElementById("url").value.trim();
       const errorEl = document.getElementById("error");
       const noticeEl = document.getElementById("notice");
       const loadingEl = document.getElementById("loading");
-      const btn = document.getElementById("processBtn");
+      const btn = document.getElementById("mergeBtn");
 
       errorEl.classList.remove("show");
       noticeEl.classList.remove("show");
@@ -314,12 +357,13 @@
 
       btn.disabled = true;
       loadingEl.classList.add("active");
+      loadingEl.textContent = "Mergeando imágenes...";
 
       try {
         const res = await fetch("/api/merge", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url })
+          body: JSON.stringify({ url, action: "merge" })
         });
 
         const data = await res.json();
@@ -330,9 +374,11 @@
           
           if (data.exists) {
             showNotice("⚡ Esta imagen ya había sido generada anteriormente");
+          } else {
+            showNotice("✅ Imágenes mergeadas exitosamente");
           }
         } else {
-          showError(data.error || "Error al procesar el tweet");
+          showError(data.error || "Error al mergear las imágenes");
         }
       } catch (err) {
         showError("Error de conexión. Intenta nuevamente.");
@@ -340,6 +386,7 @@
       } finally {
         btn.disabled = false;
         loadingEl.classList.remove("active");
+        loadingEl.textContent = "Procesando tweet...";
       }
     }
 
@@ -409,7 +456,7 @@
     }
 
     document.getElementById("url").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") merge();
+      if (e.key === "Enter") mergeAction();
     });
 
     document.getElementById("modal").addEventListener("click", (e) => {
