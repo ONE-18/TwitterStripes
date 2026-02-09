@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 
 import { scrapeImages } from "./scraper.js";
-import { mergeImages } from "./imageMerge.js";
+import { downloadSingleImage, mergeImages } from "./imageMerge.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,8 +58,17 @@ app.post("/api/merge", async (req, res) => {
     const images = await scrapeImages(url);
     console.timeEnd("⏱️  Total - Scraping");
 
-    if (images.length < 2) {
-      return res.status(400).json({ error: "No se encontraron suficientes imágenes" });
+    if (images.length === 0) {
+      return res.status(400).json({ error: "No se encontraron imágenes" });
+    }
+
+    if (images.length === 1) {
+      console.time("⏱️  Total - Descargar imagen");
+      await downloadSingleImage(images[0], outputFile);
+      console.timeEnd("⏱️  Total - Descargar imagen");
+      console.log("💾 Imagen guardada en:", outputFile);
+
+      return res.json({ image: `/output/${postId}.png`, exists: false });
     }
 
     console.time("⏱️  Total - Merge imágenes");

@@ -41,3 +41,14 @@ export async function mergeImages(urls, outputPath) {
     .png()
     .toFile(outputPath);
 }
+
+export async function downloadSingleImage(url, outputPath) {
+  const res = await axios({
+    url,
+    responseType: "arraybuffer"
+  });
+
+  await sharp(res.data)
+    .png()
+    .toFile(outputPath);
+}
