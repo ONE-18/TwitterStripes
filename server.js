@@ -113,6 +113,6 @@ app.post("/api/merge", async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
+app.listen(3000, '0.0.0.0', () => {
   console.log("🔥 App corriendo en http://localhost:3000");
 });
